@@ -11,7 +11,6 @@ from relic import ReLIC, relic_loss
 
 from utils import accuracy, get_dataset, get_encoder
 
-WARMUP_EMA_GAMMA = 0.999
 SEED = 42
 
 random.seed(SEED)
@@ -51,13 +50,11 @@ def train_relic(args):
                               num_workers=multiprocessing.cpu_count() - 4,
                               drop_last=True,
                               shuffle=True)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=len(train_loader), eta_min=0, last_epoch=-1)
 
     scaler = GradScaler(enabled=args.fp16_precision)
 
     total_num_steps = (len(train_loader) *
-                       args.num_epochs) - args.update_gamma_after_step
+                       (args.num_epochs + 1)) - args.update_gamma_after_step
     gamma = args.gamma
     global_step = 0
     total_loss = 0.0
@@ -84,18 +81,11 @@ def train_relic(args):
             scaler.step(optimizer)
             scaler.update()
 
-            if (epoch + 1) > args.warmup_epochs:
-                scheduler.step()
-            else:
-                # a hack to get through early stage training - without this
-                # training sometimes diverges or significantly slows down
-                gamma = WARMUP_EMA_GAMMA
-
             if global_step > args.update_gamma_after_step and global_step % args.update_gamma_every_n_steps == 0:
                 relic_model.update_params(gamma)
-                if (epoch + 1) > args.warmup_epochs:
-                    gamma = update_gamma(global_step, total_num_steps,
-                                         args.gamma)
+                gamma = update_gamma(global_step, total_num_steps, args.gamma)
+            else:
+                relic_model.copy_params()
 
             total_loss += loss.item()
             epoch_loss += loss.item()

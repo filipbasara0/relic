@@ -1,9 +1,8 @@
 import torch
-import torch.nn as nn
 from torchvision.datasets import MNIST, CIFAR10, STL10
 
-from aug import get_relic_aug, ContrastiveLearningViewGenerator
-from encoders import ConvNext, resnet18
+from aug import get_relic_aug, ViewGenerator
+from encoders import ConvNext, resnet18, resnet50
 
 
 def get_dataset(dataset_name, dataset_path):
@@ -11,20 +10,17 @@ def get_dataset(dataset_name, dataset_path):
         return CIFAR10(dataset_path,
                        train=True,
                        download=True,
-                       transform=ContrastiveLearningViewGenerator(
-                           get_relic_aug(32), 2))
+                       transform=ViewGenerator(get_relic_aug(32), 2))
     elif dataset_name == "stl10":
         return STL10(dataset_path,
                      split='unlabeled',
                      download=True,
-                     transform=ContrastiveLearningViewGenerator(
-                         get_relic_aug(96), 2))
+                     transform=ViewGenerator(get_relic_aug(96), 2))
     elif dataset_name == "mnist":
         return MNIST(dataset_path,
                      train=True,
                      download=True,
-                     transform=ContrastiveLearningViewGenerator(
-                         get_relic_aug(28), 2))
+                     transform=ViewGenerator(get_relic_aug(28), 2))
     raise Exception(
         "Invalid dataset name - options are [cifar10, stl10, mnist]")
 
@@ -32,12 +28,15 @@ def get_dataset(dataset_name, dataset_path):
 def get_encoder(model_name):
     if model_name == "resnet18":
         return resnet18()
+    elif model_name == "resnet50":
+        return resnet50()
     elif model_name == "convnext":
         return ConvNext(num_channels=3,
-                        patch_size=1,
+                        patch_size=2,
                         layer_dims=[64, 128, 256, 512],
-                        depths=[2, 2, 2, 2])
-    raise Exception("Invalid model name - options are [resnet18, convnext]")
+                        depths=[3, 9, 3, 3])
+    raise Exception(
+        "Invalid model name - options are [resnet18, resnet50, convnext]")
 
 
 def accuracy(output, target, topk=(1, )):
