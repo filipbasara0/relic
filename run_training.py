@@ -56,7 +56,7 @@ parser.add_argument('--tau',
                     type=float,
                     help='Softmax temperature')
 parser.add_argument('--alpha',
-                    default=1.0,
+                    default=0.005,
                     type=float,
                     help='Regularization loss factor')
 parser.add_argument('--update_gamma_after_step',
@@ -64,7 +64,7 @@ parser.add_argument('--update_gamma_after_step',
                     type=int,
                     help='Update EMA gamma after this step')
 parser.add_argument('--update_gamma_every_n_steps',
-                    default=10,
+                    default=1,
                     type=int,
                     help='Update EMA gamma after this many steps')
 

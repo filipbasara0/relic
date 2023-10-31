@@ -84,7 +84,8 @@ def train_relic(args):
             if global_step > args.update_gamma_after_step and global_step % args.update_gamma_every_n_steps == 0:
                 relic_model.update_params(gamma)
                 gamma = update_gamma(global_step, total_num_steps, args.gamma)
-            else:
+
+            if global_step <= args.update_gamma_after_step:
                 relic_model.copy_params()
 
             total_loss += loss.item()

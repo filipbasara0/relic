@@ -29,7 +29,7 @@ def relic_loss(x, x_prime, tau, alpha):
     invariance_loss = torch.nn.functional.kl_div(p1,
                                                  p2,
                                                  log_target=True,
-                                                 reduction="batchmean")
+                                                 reduction="sum")
 
     loss = contrastive_loss + alpha * invariance_loss
 
