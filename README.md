@@ -23,8 +23,8 @@ More detailed evaluation steps and results for [CIFAR10](https://github.com/fili
 
 | Evaulation model    | Dataset | Feature Extractor| Encoder   | Feature dim | Projection Head dim | Epochs | Top1 % |
 |---------------------|---------|------------------|-----------|-------------|---------------------|--------|--------|
-| LogisticRegression  | STL10   | ReLIC            | ResNet-18 | 512         | 64                  | 100    | 73.26  |
 | LogisticRegression  | CIFAR10 | ReLIC            | ResNet-18 | 512         | 64                  | 100    | 69.70  |
+| LogisticRegression  | STL10   | ReLIC            | ResNet-18 | 512         | 64                  | 100    | 73.26  |
 | LogisticRegression  | STL10   | ReLIC            | ResNet-50 | 2048        | 64                  | 100    | 76.27  |
 
 # Usage
