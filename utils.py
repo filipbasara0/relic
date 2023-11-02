@@ -1,5 +1,5 @@
 import torch
-from torchvision.datasets import MNIST, CIFAR10, STL10
+from torchvision.datasets import CIFAR10, STL10
 
 from aug import get_relic_aug, ViewGenerator
 from encoders import ConvNext, resnet18, resnet50
@@ -16,13 +16,8 @@ def get_dataset(dataset_name, dataset_path):
                      split='unlabeled',
                      download=True,
                      transform=ViewGenerator(get_relic_aug(96), 2))
-    elif dataset_name == "mnist":
-        return MNIST(dataset_path,
-                     train=True,
-                     download=True,
-                     transform=ViewGenerator(get_relic_aug(28), 2))
-    raise Exception(
-        "Invalid dataset name - options are [cifar10, stl10, mnist]")
+
+    raise Exception("Invalid dataset name - options are [cifar10, stl10]")
 
 
 def get_encoder(model_name):

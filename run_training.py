@@ -9,7 +9,7 @@ parser.add_argument('--dataset_path',
 parser.add_argument('--dataset_name',
                     default='stl10',
                     help='Dataset name',
-                    choices=['stl10', 'cifar10', 'mnist'])
+                    choices=['stl10', 'cifar10'])
 parser.add_argument(
     '-m',
     '--encoder_model_name',
@@ -56,7 +56,7 @@ parser.add_argument('--tau',
                     type=float,
                     help='Softmax temperature')
 parser.add_argument('--alpha',
-                    default=0.005,
+                    default=0.03,
                     type=float,
                     help='Regularization loss factor')
 parser.add_argument('--update_gamma_after_step',

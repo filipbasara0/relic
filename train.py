@@ -54,12 +54,13 @@ def train_relic(args):
     scaler = GradScaler(enabled=args.fp16_precision)
 
     total_num_steps = (len(train_loader) *
-                       (args.num_epochs + 1)) - args.update_gamma_after_step
+                       (args.num_epochs + 2)) - args.update_gamma_after_step
     gamma = args.gamma
     global_step = 0
     total_loss = 0.0
     for epoch in range(args.num_epochs):
         epoch_loss = 0.0
+        epoch_kl_loss = 0.0
         progress_bar = tqdm(train_loader,
                             desc=f"Epoch {epoch+1}/{args.num_epochs}")
         for step, (images, _) in enumerate(progress_bar):
@@ -69,11 +70,10 @@ def train_relic(args):
 
             with autocast(enabled=args.fp16_precision):
                 o1, o2, t1, t2 = relic_model(x1, x2)
-
-                loss1, logits_1, labels = relic_loss(o1, t2, args.tau,
-                                                     args.alpha)
-                loss2, logits_2, labels = relic_loss(o2, t1, args.tau,
-                                                     args.alpha)
+                loss1, logits_1, labels, invariance_loss1 = relic_loss(
+                    o1, t2, args.tau, args.alpha)
+                loss2, logits_2, labels, invariance_loss2 = relic_loss(
+                    o2, t1, args.tau, args.alpha)
                 loss = (loss1 + loss2) / 2
 
             optimizer.zero_grad()
@@ -93,13 +93,20 @@ def train_relic(args):
             avg_loss = total_loss / (global_step + 1)
             ep_loss = epoch_loss / (step + 1)
 
+            kl_loss = invariance_loss1.item() + invariance_loss2.item()
+            epoch_kl_loss += kl_loss
+            ep_kl_loss = epoch_kl_loss / (step + 1)
+
             current_lr = optimizer.param_groups[0]['lr']
             progress_bar.set_description(
                 f"Epoch {epoch+1}/{args.num_epochs} | "
                 f"Step {global_step+1} | "
                 f"Epoch Loss: {ep_loss:.4f} |"
                 f"Total Loss: {avg_loss:.4f} |"
+                f"KL Loss: {ep_kl_loss:.6f} |"
                 f"Gamma: {gamma:.6f} |"
+                f"Alpha: {args.alpha:.6f} |"
+                f"Tau: {args.tau:.6f} |"
                 f"Lr: {current_lr:.6f}")
 
             global_step += 1

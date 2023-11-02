@@ -24,17 +24,14 @@ def relic_loss(x, x_prime, tau, alpha):
     contrastive_loss = torch.nn.functional.cross_entropy(logits, labels)
 
     # KL divergence loss
-    p1 = torch.nn.functional.softmax(logits, dim=1)
+    p1 = torch.nn.functional.log_softmax(logits, dim=1)
     p2 = torch.nn.functional.softmax(logits, dim=0).t()
-    invariance_loss = torch.nn.functional.kl_div(p1,
-                                                 p2,
-                                                 log_target=True,
-                                                 reduction="sum")
+    invariance_loss = torch.nn.functional.kl_div(p1, p2, reduction="batchmean")
 
     loss = contrastive_loss + alpha * invariance_loss
 
     # return logits and labels for debug
-    return loss, logits, labels
+    return loss, logits, labels, invariance_loss
 
 
 class ReLIC(torch.nn.Module):
