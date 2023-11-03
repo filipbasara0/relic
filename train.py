@@ -19,7 +19,8 @@ torch.manual_seed(SEED)
 torch.cuda.manual_seed(SEED)
 
 
-# cosine EMA decay as defined in https://arxiv.org/abs/2010.07922
+# cosine EMA schedule (increase from tau_base to one) as defined in https://arxiv.org/abs/2010.07922
+# k -> current training step, K -> maximum number of training steps
 def update_gamma(k, K, tau_base):
     k = torch.tensor(k, dtype=torch.float32)
     K = torch.tensor(K, dtype=torch.float32)
@@ -47,7 +48,7 @@ def train_relic(args):
     ds = get_dataset(args.dataset_name, args.dataset_path)
     train_loader = DataLoader(ds,
                               batch_size=args.batch_size,
-                              num_workers=multiprocessing.cpu_count() - 4,
+                              num_workers=multiprocessing.cpu_count(),
                               drop_last=True,
                               shuffle=True)
 
