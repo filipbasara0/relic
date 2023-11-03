@@ -30,7 +30,7 @@ def relic_loss(x, x_prime, tau, alpha):
 
     loss = contrastive_loss + alpha * invariance_loss
 
-    # return logits and labels for debug
+    # return logits, labels for and invariance_loss for debug
     return loss, logits, labels, invariance_loss
 
 

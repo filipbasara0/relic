@@ -93,8 +93,8 @@ def train_relic(args):
             avg_loss = total_loss / (global_step + 1)
             ep_loss = epoch_loss / (step + 1)
 
-            kl_loss = invariance_loss1.item() + invariance_loss2.item()
-            epoch_kl_loss += kl_loss
+            epoch_kl_loss += (invariance_loss1.item() +
+                              invariance_loss2.item()) / 2
             ep_kl_loss = epoch_kl_loss / (step + 1)
 
             current_lr = optimizer.param_groups[0]['lr']
@@ -105,8 +105,8 @@ def train_relic(args):
                 f"Total Loss: {avg_loss:.4f} |"
                 f"KL Loss: {ep_kl_loss:.6f} |"
                 f"Gamma: {gamma:.6f} |"
-                f"Alpha: {args.alpha:.6f} |"
-                f"Tau: {args.tau:.6f} |"
+                f"Alpha: {args.alpha:.3f} |"
+                f"Tau: {args.tau:.3f} |"
                 f"Lr: {current_lr:.6f}")
 
             global_step += 1

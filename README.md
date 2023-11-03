@@ -23,9 +23,9 @@ More detailed evaluation steps and results for [CIFAR10](https://github.com/fili
 
 | Evaulation model    | Dataset | Feature Extractor| Encoder   | Feature dim | Projection Head dim | Epochs | Top1 % |
 |---------------------|---------|------------------|-----------|-------------|---------------------|--------|--------|
-| LogisticRegression  | CIFAR10 | ReLIC            | ResNet-18 | 512         | 64                  | 100    | 69.70  |
-| LogisticRegression  | STL10   | ReLIC            | ResNet-18 | 512         | 64                  | 100    | 73.26  |
-| LogisticRegression  | STL10   | ReLIC            | ResNet-50 | 2048        | 64                  | 100    | 76.27  |
+| LogisticRegression  | CIFAR10 | ReLIC            | ResNet-18 | 512         | 64                  | 100    | 70.32  |
+| LogisticRegression  | STL10   | ReLIC            | ResNet-18 | 512         | 64                  | 100    | 74.91  |
+| LogisticRegression  | STL10   | ReLIC            | ResNet-50 | 2048        | 64                  | 100    | 78.52  |
 
 # Usage
 
@@ -44,7 +44,7 @@ All training is done from scratch.
 ### Examples
 `CIFAR10` ResNet-18 model was trained with this command:
 
-`python run_training.py --dataset_name "cifar10" --encoder_model_name resnet18 --fp16_precision`
+`python run_training.py --dataset_name "cifar10" --encoder_model_name resnet18 --fp16_precision --tau 0.5`
 
 `STL10` ResNet-50 model was trained with this command:
 
