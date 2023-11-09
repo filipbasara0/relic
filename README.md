@@ -24,8 +24,8 @@ More detailed evaluation steps and results for [CIFAR10](https://github.com/fili
 | Evaulation model    | Dataset | Feature Extractor| Encoder   | Feature dim | Projection Head dim | Epochs | Top1 % |
 |---------------------|---------|------------------|-----------|-------------|---------------------|--------|--------|
 | LogisticRegression  | CIFAR10 | ReLIC            | ResNet-18 | 512         | 64                  | 100    | 71.07  |
-| LogisticRegression  | STL10   | ReLIC            | ResNet-18 | 512         | 64                  | 100    | 75.97  |
-| LogisticRegression  | STL10   | ReLIC            | ResNet-50 | 2048        | 64                  | 100    | 78.52  |
+| LogisticRegression  | STL10   | ReLIC            | ResNet-18 | 512         | 64                  | 100    | 76.10  |
+| LogisticRegression  | STL10   | ReLIC            | ResNet-50 | 2048        | 64                  | 100    | 80.40  |
 
 # Usage
 
@@ -37,18 +37,18 @@ To setup the code, clone the repository, optionally create a venv and install re
 3. activate virtual environment: `source env/bin/activate`
 4. install requirements: `pip install -r requirements.txt`
 
-Code currently supports ResNet18, ResNet50 and an experimental version of the ConvNext model. Supported datasets are STL10, CIFAR10 and MNIST.
+Code currently supports ResNet18, ResNet50 and an experimental version of the ConvNext model. Supported datasets are STL10 and CIFAR10.
 
 All training is done from scratch.
 
 ### Examples
 `CIFAR10` ResNet-18 model was trained with this command:
 
-`python run_training.py --dataset_name "cifar10" --encoder_model_name resnet18 --fp16_precision --tau 0.5`
+`python run_training.py --dataset_name "cifar10" --encoder_model_name resnet18 --fp16_precision --tau 5 --gamma 0.99 --alpha 1.0`
 
 `STL10` ResNet-50 model was trained with this command:
 
-`python run_training.py --dataset_name "stl10" --encoder_model_name resnet50 --fp16_precision --tau 5`
+`python run_training.py --dataset_name "stl10" --encoder_model_name resnet50 --fp16_precision`
 
 ### Detailed options
 Once the code is setup, run the following command with optinos listed below:
@@ -61,7 +61,7 @@ options:
   -h, --help            show this help message and exit
   --dataset_path DATASET_PATH
                         Path where datasets will be saved
-  --dataset_name {stl10,cifar10,mnist}
+  --dataset_name {stl10,cifar10}
                         Dataset name
   -m {resnet18,resnet50,convnext}, --encoder_model_name {resnet18,resnet50,convnext}
                         model architecture: resnet18, resnet50 or convnext (default: resnet18)

@@ -30,7 +30,7 @@ parser.add_argument('-b',
                     type=int,
                     help='Batch size')
 parser.add_argument('-lr', '--learning_rate', default=3e-4, type=float)
-parser.add_argument('-wd', '--weight_decay', default=1e-4, type=float)
+parser.add_argument('-wd', '--weight_decay', default=1e-5, type=float)
 parser.add_argument('--fp16_precision',
                     action='store_true',
                     help='Whether to use 16-bit precision for GPU training')
@@ -52,11 +52,11 @@ parser.add_argument('--gamma',
                     type=float,
                     help='Initial EMA coefficient')
 parser.add_argument('--tau',
-                    default=5.0,
+                    default=3.0,
                     type=float,
                     help='Softmax temperature')
 parser.add_argument('--alpha',
-                    default=0.6,
+                    default=1.5,
                     type=float,
                     help='Regularization loss factor')
 parser.add_argument('--update_gamma_after_step',
