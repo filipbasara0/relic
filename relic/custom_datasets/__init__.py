@@ -1,0 +1,1 @@
+from relic.custom_datasets.custom_datasets import tiny_imagenet, food101

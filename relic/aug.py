@@ -15,19 +15,33 @@ class ViewGenerator(object):
         return [self.base_transform(x) for i in range(self.n_views)]
 
 
+def _grayscale_to_rgb(img):
+    if img.mode == "L":
+        return img.convert("RGB")
+    return img
+
+
+def _round_up_to_odd(num):
+    return np.ceil(num) // 2 * 2 + 1
+
+
 def get_relic_aug(image_size):
     color_jitter = transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
     return transforms.Compose([
-        transforms.RandomResizedCrop(image_size),
+        transforms.RandomResizedCrop(image_size, scale=(0.08, 1.0)),
         transforms.RandomHorizontalFlip(),
         transforms.RandomApply([color_jitter], p=0.8),
         transforms.RandomGrayscale(p=0.2),
-        transforms.GaussianBlur(int(image_size * 0.1)),
+        transforms.Lambda(_grayscale_to_rgb),
+        transforms.GaussianBlur(_round_up_to_odd(int(image_size * 0.1))),
         transforms.RandomSolarize(127, 0.5),
         transforms.ToTensor()
     ])
 
 
-# TODO: add image_size param and Resize transform
-def get_relic_aug_inference():
-    return transforms.Compose([transforms.ToTensor()])
+def get_relic_aug_inference(image_size=(96, 96)):
+    return transforms.Compose([
+        transforms.Resize(image_size),
+        transforms.Lambda(_grayscale_to_rgb),
+        transforms.ToTensor()
+    ])

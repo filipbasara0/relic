@@ -9,14 +9,15 @@ parser.add_argument('--dataset_path',
 parser.add_argument('--dataset_name',
                     default='stl10',
                     help='Dataset name',
-                    choices=['stl10', 'cifar10'])
+                    choices=['stl10', 'cifar10', "tiny_imagenet", "food101"])
 parser.add_argument(
     '-m',
     '--encoder_model_name',
     default='resnet18',
-    choices=['resnet18', 'resnet50', 'convnext'],
+    choices=['resnet18', 'resnet50', "efficientnet"],
     help=
-    'model architecture: resnet18, resnet50 or convnext (default: resnet18)')
+    'model architecture: resnet18, resnet50 or efficientnet (default: resnet18)'
+)
 parser.add_argument('-save_model_dir',
                     default='./models',
                     help='Path where models')
@@ -67,6 +68,10 @@ parser.add_argument('--update_gamma_every_n_steps',
                     default=1,
                     type=int,
                     help='Update EMA gamma after this many steps')
+parser.add_argument('--ckpt_path',
+                    default=None,
+                    type=str,
+                    help='Specify path to relic_model.pth to resume training')
 
 
 def main():

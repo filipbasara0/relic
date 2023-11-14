@@ -37,7 +37,7 @@ To setup the code, clone the repository, optionally create a venv and install re
 3. activate virtual environment: `source env/bin/activate`
 4. install requirements: `pip install -r requirements.txt`
 
-Code currently supports ResNet18, ResNet50 and an experimental version of the ConvNext model. Supported datasets are STL10 and CIFAR10.
+Code currently supports ResNet18, ResNet50 and an experimental version of the EfficientNet model. Supported datasets are STL10 and CIFAR10.
 
 All training is done from scratch.
 
@@ -63,8 +63,8 @@ options:
                         Path where datasets will be saved
   --dataset_name {stl10,cifar10}
                         Dataset name
-  -m {resnet18,resnet50,convnext}, --encoder_model_name {resnet18,resnet50,convnext}
-                        model architecture: resnet18, resnet50 or convnext (default: resnet18)
+  -m {resnet18,resnet50,efficientnet}, --encoder_model_name {resnet18,resnet50,efficientnet}
+                        model architecture: resnet18, resnet50 or efficientnet (default: resnet18)
   -save_model_dir SAVE_MODEL_DIR
                         Path where models
   --num_epochs NUM_EPOCHS

@@ -1,8 +1,9 @@
 import torch
 from torchvision.datasets import CIFAR10, STL10
 
-from aug import get_relic_aug, ViewGenerator
-from encoders import ConvNext, resnet18, resnet50
+from relic.aug import get_relic_aug, ViewGenerator
+from relic.encoders import resnet18, resnet50, efficientnet_v2_s
+from relic.custom_datasets import tiny_imagenet, food101
 
 
 def get_dataset(dataset_name, dataset_path):
@@ -16,6 +17,10 @@ def get_dataset(dataset_name, dataset_path):
                      split='unlabeled',
                      download=True,
                      transform=ViewGenerator(get_relic_aug(96), 2))
+    elif dataset_name == "tiny_imagenet":
+        return tiny_imagenet(transform=ViewGenerator(get_relic_aug(64), 2))
+    elif dataset_name == "food101":
+        return food101(transform=ViewGenerator(get_relic_aug(192), 2))
 
     raise Exception("Invalid dataset name - options are [cifar10, stl10]")
 
@@ -25,13 +30,10 @@ def get_encoder(model_name):
         return resnet18()
     elif model_name == "resnet50":
         return resnet50()
-    elif model_name == "convnext":
-        return ConvNext(num_channels=3,
-                        patch_size=2,
-                        layer_dims=[64, 128, 256, 512],
-                        depths=[3, 9, 3, 3])
+    elif model_name == "efficientnet":
+        return efficientnet_v2_s()
     raise Exception(
-        "Invalid model name - options are [resnet18, resnet50, convnext]")
+        "Invalid model name - options are [resnet18, resnet50, efficientnet]")
 
 
 def accuracy(output, target, topk=(1, )):

@@ -9,7 +9,7 @@ from torchinfo import summary
 
 from relic import ReLIC, relic_loss
 
-from utils import accuracy, get_dataset, get_encoder
+from relic.utils import accuracy, get_dataset, get_encoder
 
 SEED = 42
 
@@ -37,6 +37,9 @@ def train_relic(args):
                         mlp_out_dim=args.proj_out_dim,
                         mlp_hidden=args.proj_hidden_dim)
 
+    if args.ckpt_path:
+        model_state = torch.load(args.ckpt_path)
+        relic_model.load_state_dict(model_state)
     relic_model = relic_model.to(device)
 
     summary(relic_model, input_size=[(1, 3, 32, 32), (1, 3, 32, 32)])

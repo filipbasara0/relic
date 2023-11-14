@@ -8,8 +8,8 @@ class Squeeze(nn.Module):
         return x.squeeze(-1).squeeze(-1)
 
 
-def _prep_resnet(resnet):
-    modules = list(resnet.children())[:-1]
+def _prep_encoder(model):
+    modules = list(model.children())[:-1]
     modules.append(nn.AdaptiveAvgPool2d(1))
     modules.append(Squeeze())
 
@@ -18,9 +18,14 @@ def _prep_resnet(resnet):
 
 def resnet18():
     resnet = models.resnet18(weights=None)
-    return _prep_resnet(resnet)
+    return _prep_encoder(resnet)
 
 
 def resnet50():
     resnet = models.resnet50(weights=None)
-    return _prep_resnet(resnet)
+    return _prep_encoder(resnet)
+
+
+def efficientnet_v2_s():
+    model = models.efficientnet_v2_s(weights=None)
+    return _prep_encoder(model)

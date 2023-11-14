@@ -1,0 +1,13 @@
+from datasets import load_dataset
+
+from relic.custom_datasets.huggingface_dataset import HuggingfaceDataset
+
+
+def tiny_imagenet(transform, split="train"):
+    data = load_dataset('Maysee/tiny-imagenet', split=split)
+    return HuggingfaceDataset(data, transform)
+
+
+def food101(transform, split="train"):
+    data = load_dataset('food101', split=split)
+    return HuggingfaceDataset(data, transform)

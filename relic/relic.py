@@ -1,7 +1,7 @@
 import torch
 import copy
 
-from utils import get_feature_size
+from relic.utils import get_feature_size
 
 
 class MLPHead(torch.nn.Module):
