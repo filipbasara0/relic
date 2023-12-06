@@ -3,7 +3,7 @@ from torchvision.datasets import CIFAR10, STL10
 
 from relic.aug import get_relic_aug, ViewGenerator
 from relic.encoders import resnet18, resnet50, efficientnet_v2_s
-from relic.custom_datasets import tiny_imagenet, food101
+from relic.custom_datasets import tiny_imagenet, food101, imagenet1k
 
 
 def get_dataset(dataset_name, dataset_path):
@@ -21,6 +21,8 @@ def get_dataset(dataset_name, dataset_path):
         return tiny_imagenet(transform=ViewGenerator(get_relic_aug(64), 2))
     elif dataset_name == "food101":
         return food101(transform=ViewGenerator(get_relic_aug(192), 2))
+    elif dataset_name == "imagenet1k":
+        return imagenet1k(transform=ViewGenerator(get_relic_aug(192), 2))
 
     raise Exception("Invalid dataset name - options are [cifar10, stl10]")
 

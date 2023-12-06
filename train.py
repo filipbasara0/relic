@@ -51,8 +51,9 @@ def train_relic(args):
     ds = get_dataset(args.dataset_name, args.dataset_path)
     train_loader = DataLoader(ds,
                               batch_size=args.batch_size,
-                              num_workers=multiprocessing.cpu_count(),
+                              num_workers=multiprocessing.cpu_count() - 4,
                               drop_last=True,
+                              pin_memory=True,
                               shuffle=True)
 
     scaler = GradScaler(enabled=args.fp16_precision)

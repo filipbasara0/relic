@@ -16,7 +16,7 @@ class ViewGenerator(object):
 
 
 def _grayscale_to_rgb(img):
-    if img.mode == "L":
+    if img.mode == "L" or img.mode != "RGB":
         return img.convert("RGB")
     return img
 
@@ -28,6 +28,7 @@ def _round_up_to_odd(num):
 def get_relic_aug(image_size):
     color_jitter = transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
     return transforms.Compose([
+        transforms.Lambda(_grayscale_to_rgb),
         transforms.RandomResizedCrop(image_size, scale=(0.08, 1.0)),
         transforms.RandomHorizontalFlip(),
         transforms.RandomApply([color_jitter], p=0.8),

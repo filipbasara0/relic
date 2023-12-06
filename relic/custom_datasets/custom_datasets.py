@@ -11,3 +11,7 @@ def tiny_imagenet(transform, split="train"):
 def food101(transform, split="train"):
     data = load_dataset('food101', split=split)
     return HuggingfaceDataset(data, transform)
+
+def imagenet1k(transform, split="train"):
+    data = load_dataset("imagenet-1k", split=split)
+    return HuggingfaceDataset(data, transform)

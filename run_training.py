@@ -9,7 +9,7 @@ parser.add_argument('--dataset_path',
 parser.add_argument('--dataset_name',
                     default='stl10',
                     help='Dataset name',
-                    choices=['stl10', 'cifar10', "tiny_imagenet", "food101"])
+                    choices=['stl10', 'cifar10', "tiny_imagenet", "food101", "imagenet1k"])
 parser.add_argument(
     '-m',
     '--encoder_model_name',
