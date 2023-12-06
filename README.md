@@ -30,12 +30,10 @@ More detailed evaluation steps and results for [CIFAR10](https://github.com/fili
 # Usage
 
 ### Instalation
-To setup the code, clone the repository, optionally create a venv and install requirements:
 
-1. `git clone git@github.com:filipbasara0/relic.git`
-2. create virtual environment: `virtualenv -p python3.10 env`
-3. activate virtual environment: `source env/bin/activate`
-4. install requirements: `pip install -r requirements.txt`
+```bash
+$ pip install relic-pytorch
+```
 
 Code currently supports ResNet18, ResNet50 and an experimental version of the EfficientNet model. Supported datasets are STL10 and CIFAR10.
 
@@ -44,15 +42,15 @@ All training is done from scratch.
 ### Examples
 `CIFAR10` ResNet-18 model was trained with this command:
 
-`python run_training.py --dataset_name "cifar10" --encoder_model_name resnet18 --fp16_precision --tau 5 --gamma 0.99 --alpha 1.0`
+`relic_train --dataset_name "cifar10" --encoder_model_name resnet18 --fp16_precision --tau 5 --gamma 0.99 --alpha 1.0`
 
 `STL10` ResNet-50 model was trained with this command:
 
-`python run_training.py --dataset_name "stl10" --encoder_model_name resnet50 --fp16_precision`
+`relic_train --dataset_name "stl10" --encoder_model_name resnet50 --fp16_precision`
 
 ### Detailed options
 Once the code is setup, run the following command with optinos listed below:
-`python run_training.py [args...]⬇️`
+`relic_train [args...]⬇️`
 
 ```
 ReLIC
