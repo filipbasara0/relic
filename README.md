@@ -11,13 +11,11 @@ This simple approach is very similar to [BYOL](https://arxiv.org/abs/2006.07733)
 
 # Results
 
-First, we learned features using SimCLR on the ```STL10 unsupervised``` set. Then, we train a linear classifier on top of the frozen features from SimCLR. The linear model is trained on features extracted from the ```STL10 train``` set and evaluated on the ```STL10 test``` set.
-
-Models are first trained on training subsets - for `CIFAR10` 50,000 and for `STL10` 100,000 images. For evaluation, I trained and tested LogisticRegression on:
-1. `CIFAR10` - 50,000 train images on 10,000 test images.
+Models are pretrained on training subsets - for `CIFAR10` 50,000 and for `STL10` 100,000 images. For evaluation, I trained and tested LogisticRegression on frozen features from:
+1. `CIFAR10` - 50,000 train images on ReLIC
 2. `STL10` - features were learned on 100k unlabeled images. LogReg was trained on 5k train images and evaluated on 8k test images.
 
-Linear probing were evaluated on features extracted from encoders using the scikit LogisticRegression model.
+Linear probing was used for evaluating on features extracted from encoders using the scikit LogisticRegression model.
 
 More detailed evaluation steps and results for [CIFAR10](https://github.com/filipbasara0/relic/blob/main/notebooks/linear-probing-cifar.ipynb) and [STL10](https://github.com/filipbasara0/relic/blob/main/notebooks/linear-probing-stl.ipynb) can be found in the notebooks directory. 
 
