@@ -54,7 +54,7 @@ class ReLIC(torch.nn.Module):
     @torch.inference_mode()
     def get_features(self, img):
         with torch.no_grad():
-            return self.online_encoder[0](img)
+            return self.target_encoder[0](img)
 
     def forward(self, x1, x2):
         o1, o2 = self.online_encoder(x1), self.online_encoder(x2)
@@ -81,7 +81,7 @@ class ReLIC(torch.nn.Module):
             t_buffer.data.copy_(o_buffer)
 
     def save_encoder(self, path):
-        torch.save(self.online_encoder[0].state_dict(), path)
+        torch.save(self.target_encoder[0].state_dict(), path)
 
     def _get_params(self):
         return zip(self.online_encoder.parameters(),
