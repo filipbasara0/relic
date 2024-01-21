@@ -13,7 +13,7 @@ def read_long_description():
 setup(
     name = 'relic-pytorch',
     packages = find_packages(exclude=['notebooks']),
-    version = '0.1.2',
+    version = '0.2.0',
     license='MIT',
     description = 'Simple self-supervised contrastive based on based on the ReLIC method',
     author = 'Filip Basara',

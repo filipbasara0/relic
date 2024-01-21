@@ -6,6 +6,8 @@ A PyTorch implementation of a computer vision self-supervised learning method ba
 
 This simple approach is very similar to [BYOL](https://arxiv.org/abs/2006.07733) and [SimCLR](https://arxiv.org/abs/2002.05709). The training technique uses a online and target encoder (EMA) with a simple critic MLP projector, while the instance discrimination loss function resembles the contrastive loss used in SimCLR. The other half of the loss function acts as a regularizer - it includes an invariance penalty, which forces the representations to stay invariant under data augmentations and amplifies intra-class distances.
 
+Also has an experimental support for the sigmoid pairwise loss, from the [SigLIP](https://arxiv.org/abs/2303.15343) paper. This loss is generally less stable and gives slightly worse metrics, but still yields very good representations.
+
 ![image](https://github.com/filipbasara0/relic/assets/29043871/70ccdb40-3343-4ea7-946b-80bdc1e7b85d)
 
 
@@ -42,7 +44,7 @@ All training is done from scratch.
 ### Examples
 `CIFAR10` ResNet-18 model was trained with this command:
 
-`relic_train --dataset_name "cifar10" --encoder_model_name resnet18 --fp16_precision --tau 5 --gamma 0.99 --alpha 1.0`
+`relic_train --dataset_name "cifar10" --encoder_model_name resnet18 --fp16_precision --gamma 0.99 --alpha 1.0`
 
 `STL10` ResNet-50 model was trained with this command:
 
@@ -79,7 +81,7 @@ options:
   --log_every_n_steps LOG_EVERY_N_STEPS
                         Log every n steps
   --gamma GAMMA         Initial EMA coefficient
-  --tau TAU             Softmax temperature
+  --use_siglip          Whether to use siglip loss.
   --alpha ALPHA         Regularization loss factor
   --update_gamma_after_step UPDATE_GAMMA_AFTER_STEP
                         Update EMA gamma after this step
@@ -97,5 +99,14 @@ options:
       eprint={2010.07922},
       archivePrefix={arXiv},
       primaryClass={cs.LG}
+}
+
+@misc{zhai2023sigmoid,
+      title={Sigmoid Loss for Language Image Pre-Training}, 
+      author={Xiaohua Zhai and Basil Mustafa and Alexander Kolesnikov and Lucas Beyer},
+      year={2023},
+      eprint={2303.15343},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
 }
 ```

@@ -10,6 +10,7 @@ from torchinfo import summary
 from relic import ReLIC, relic_loss
 
 from relic.utils import accuracy, get_dataset, get_encoder
+from relic.stl10_eval import STL10Eval
 
 SEED = 42
 
@@ -51,13 +52,14 @@ def train_relic(args):
     ds = get_dataset(args.dataset_name, args.dataset_path)
     train_loader = DataLoader(ds,
                               batch_size=args.batch_size,
-                              num_workers=multiprocessing.cpu_count() - 4,
+                              num_workers=multiprocessing.cpu_count() - 8,
                               drop_last=True,
                               pin_memory=True,
                               shuffle=True)
 
     scaler = GradScaler(enabled=args.fp16_precision)
 
+    stl10_eval = STL10Eval()
     total_num_steps = (len(train_loader) *
                        (args.num_epochs + 2)) - args.update_gamma_after_step
     gamma = args.gamma
@@ -76,9 +78,11 @@ def train_relic(args):
             with autocast(enabled=args.fp16_precision):
                 o1, o2, t1, t2 = relic_model(x1, x2)
                 loss1, logits_1, labels, invariance_loss1 = relic_loss(
-                    o1, t2, args.tau, args.alpha)
+                    o1, t2, relic_model.t_prime, relic_model.b,
+                    args.alpha, use_siglip=args.use_siglip)
                 loss2, logits_2, labels, invariance_loss2 = relic_loss(
-                    o2, t1, args.tau, args.alpha)
+                    o2, t1, relic_model.t_prime, relic_model.b,
+                    args.alpha, use_siglip=args.use_siglip)
                 loss = (loss1 + loss2) / 2
 
             optimizer.zero_grad()
@@ -111,11 +115,11 @@ def train_relic(args):
                 f"KL Loss: {ep_kl_loss:.6f} |"
                 f"Gamma: {gamma:.6f} |"
                 f"Alpha: {args.alpha:.3f} |"
-                f"Tau: {args.tau:.3f} |"
                 f"Lr: {current_lr:.6f}")
 
             global_step += 1
             if global_step % args.log_every_n_steps == 0:
+                labels = torch.arange(logits_1.size(0)).to(logits_1.device)
                 top1, top5 = accuracy(logits_1, labels, topk=(1, 5))
                 print('acc/top1 logits1', top1[0].item())
                 print('acc/top5 logits1', top5[0].item())
@@ -127,3 +131,6 @@ def train_relic(args):
                 torch.save(relic_model.state_dict(),
                            f"{args.save_model_dir}/relic_model.pth")
                 relic_model.save_encoder(f"{args.save_model_dir}/encoder.pth")
+
+            if global_step % (args.log_every_n_steps * 5) == 0:
+                stl10_eval.evaluate(relic_model)

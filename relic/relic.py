@@ -1,5 +1,7 @@
 import torch
 import copy
+import torch.nn as nn
+import torch.nn.functional as F
 
 from relic.utils import get_feature_size
 
@@ -9,26 +11,46 @@ class MLPHead(torch.nn.Module):
     def __init__(self, in_dim, out_dim, hidden_dim=2048):
         super(MLPHead, self).__init__()
         self.block = torch.nn.Sequential(
-            torch.nn.Linear(in_dim, hidden_dim, bias=False), torch.nn.ReLU(),
-            torch.nn.Linear(hidden_dim, out_dim, bias=False))
-
+            torch.nn.Linear(in_dim, hidden_dim, bias=False),
+            torch.nn.ReLU(),
+            torch.nn.Linear(hidden_dim, out_dim, bias=False)
+        )
     def forward(self, x):
         return self.block(x)
 
 
-def relic_loss(x, x_prime, tau, alpha):
-    logits = torch.mm(x, x_prime.t()) / tau
+def relic_loss(x, x_prime, t_prime, b, alpha, use_siglip=False,
+               pos_weight=10.0, neg_weight=0.1):
+    """
+    Calculate the sigmoid loss for CLIP.
 
-    # Instance discrimination loss
-    labels = torch.arange(logits.size(0)).to(logits.device)
-    contrastive_loss = torch.nn.functional.cross_entropy(logits, labels)
+    Parameters:
+    img_emb (torch.Tensor): Image embeddings tensor of shape [n, dim].
+    txt_emb (torch.Tensor): Text embeddings tensor of shape [n, dim].
+    t_prime (torch.Tensor): Learnable temperature parameter.
+    b (torch.Tensor): Learnable bias parameter.
+    tau (float): Fixed temperature param.
+    alpha (float): KL divergence (regularization term) weight.
+    """
+    n = x.size(0)
+    logits = torch.mm(x, x_prime.t()) * t_prime.exp() + b
+
+    if use_siglip:
+        # pairwise sigmoid loss (from https://arxiv.org/abs/2303.15343)
+        labels = 2 * torch.eye(n, device=x.device) - 1
+        weights = torch.where(labels > 0, pos_weight, neg_weight)
+        loss = -torch.sum(weights * F.logsigmoid(labels * logits)) / n
+    else:
+        # Instance discrimination loss
+        labels = torch.arange(n).to(logits.device)
+        loss = torch.nn.functional.cross_entropy(logits, labels)
 
     # KL divergence loss
     p1 = torch.nn.functional.log_softmax(logits, dim=1)
     p2 = torch.nn.functional.softmax(logits, dim=0).t()
     invariance_loss = torch.nn.functional.kl_div(p1, p2, reduction="batchmean")
 
-    loss = contrastive_loss + alpha * invariance_loss
+    loss = loss + alpha * invariance_loss
 
     # return logits, labels for and invariance_loss for debug
     return loss, logits, labels, invariance_loss
@@ -39,7 +61,7 @@ class ReLIC(torch.nn.Module):
     def __init__(self,
                  encoder,
                  mlp_out_dim=64,
-                 mlp_hidden=2048,
+                 mlp_hidden=512,
                  mlp_in_dim=None):
         super(ReLIC, self).__init__()
 
@@ -51,6 +73,9 @@ class ReLIC(torch.nn.Module):
         self.target_encoder = copy.deepcopy(self.online_encoder)
         self.target_encoder.requires_grad_(False)
 
+        self.t_prime = nn.Parameter(torch.zeros(1))
+        self.b = nn.Parameter(torch.zeros(1))
+
     @torch.inference_mode()
     def get_features(self, img):
         with torch.no_grad():
@@ -60,6 +85,7 @@ class ReLIC(torch.nn.Module):
         o1, o2 = self.online_encoder(x1), self.online_encoder(x2)
         with torch.no_grad():
             t1, t2 = self.target_encoder(x1), self.target_encoder(x2)
+        t1, t2 = t1.detach(), t2.detach()
         return o1, o2, t1, t2
 
     def update_params(self, gamma):

@@ -52,10 +52,6 @@ parser.add_argument('--gamma',
                     default=0.996,
                     type=float,
                     help='Initial EMA coefficient')
-parser.add_argument('--tau',
-                    default=3.0,
-                    type=float,
-                    help='Softmax temperature')
 parser.add_argument('--alpha',
                     default=1.5,
                     type=float,
@@ -72,6 +68,9 @@ parser.add_argument('--ckpt_path',
                     default=None,
                     type=str,
                     help='Specify path to relic_model.pth to resume training')
+parser.add_argument('--use_siglip',
+                    action='store_true',
+                    help='Whether to use siglip loss')
 
 
 def main():
