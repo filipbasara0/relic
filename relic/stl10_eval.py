@@ -15,7 +15,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def linear_regression(embeddings, labels, embeddings_val, labels_val):
+def logistic_regression(embeddings, labels, embeddings_val, labels_val):
     X_train, X_test = embeddings, embeddings_val
     y_train, y_test = labels, labels_val
     
@@ -61,7 +61,7 @@ class STL10Eval:
             embeddings, labels = self._get_image_embs_labels(model, self.train_loader)
             embeddings_val, labels_val = self._get_image_embs_labels(model, self.val_loader)
             
-            linear_regression(embeddings, labels, embeddings_val, labels_val)
+            logistic_regression(embeddings, labels, embeddings_val, labels_val)
 
     def _get_image_embs_labels(self, model, dataloader):
         embs, labels = [], []
