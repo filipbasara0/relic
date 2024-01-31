@@ -8,7 +8,10 @@ This simple approach is very similar to [BYOL](https://arxiv.org/abs/2006.07733)
 
 ![image](https://github.com/filipbasara0/relic/assets/29043871/70ccdb40-3343-4ea7-946b-80bdc1e7b85d)
 
+Repo includes the multi-crop augmentation, which is used in the follow-up [Pushing the limits of self-supervised ResNets: Can we outperform supervised learning without labels on ImageNet? (ReLICv2)](https://arxiv.org/pdf/2201.05119.pdf) paper. Loss function is extended to support an arbitrary number of small (local) and large (global) views. Using this technique generally results in more robust and higher quality representations.
+
 Also has an experimental support for the sigmoid pairwise loss, from the [SigLIP](https://arxiv.org/abs/2303.15343) paper. This loss is generally less stable and gives slightly worse metrics, but still yields very good representations.
+
 
 # Results
 
