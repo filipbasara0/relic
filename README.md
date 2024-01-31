@@ -6,10 +6,9 @@ A PyTorch implementation of a computer vision self-supervised learning method ba
 
 This simple approach is very similar to [BYOL](https://arxiv.org/abs/2006.07733) and [SimCLR](https://arxiv.org/abs/2002.05709). The training technique uses a online and target encoder (EMA) with a simple critic MLP projector, while the instance discrimination loss function resembles the contrastive loss used in SimCLR. The other half of the loss function acts as a regularizer - it includes an invariance penalty, which forces the representations to stay invariant under data augmentations and amplifies intra-class distances.
 
-Also has an experimental support for the sigmoid pairwise loss, from the [SigLIP](https://arxiv.org/abs/2303.15343) paper. This loss is generally less stable and gives slightly worse metrics, but still yields very good representations.
-
 ![image](https://github.com/filipbasara0/relic/assets/29043871/70ccdb40-3343-4ea7-946b-80bdc1e7b85d)
 
+Also has an experimental support for the sigmoid pairwise loss, from the [SigLIP](https://arxiv.org/abs/2303.15343) paper. This loss is generally less stable and gives slightly worse metrics, but still yields very good representations.
 
 # Results
 
