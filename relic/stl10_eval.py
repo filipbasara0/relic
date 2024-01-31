@@ -6,9 +6,9 @@ import torchvision
 from sklearn.metrics import accuracy_score
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.metrics import accuracy_score
 
-from relic.aug import get_relic_aug_inference
+from relic.aug import get_inference_transforms
 
 import warnings
 
@@ -35,7 +35,7 @@ class STL10Eval:
     def __init__(self, image_size=96):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        transform = get_relic_aug_inference(image_size=(image_size, image_size))
+        transform = get_inference_transforms(image_size=(image_size, image_size))
         train_ds = torchvision.datasets.STL10("data/",
                                         split='train',
                                         transform=transform,
@@ -65,7 +65,7 @@ class STL10Eval:
 
     def _get_image_embs_labels(self, model, dataloader):
         embs, labels = [], []
-        for idx, (images, targets) in enumerate(dataloader):
+        for _, (images, targets) in enumerate(dataloader):
             with torch.no_grad():
                 images = images.to(self.device)
                 out = model(images)
@@ -73,8 +73,3 @@ class STL10Eval:
                 embs.extend(features)
                 labels.extend(targets.cpu().detach().tolist())
         return np.array(embs), np.array(labels)
-    
-    def _get_text_embs(self, model):
-        input_ids = torch.tensor(self.encoded_texts["input_ids"]).to(self.device)
-        attention_mask = torch.tensor(self.encoded_texts["attention_mask"]).to(self.device)
-        return model.extract_text_features(input_ids, attention_mask)

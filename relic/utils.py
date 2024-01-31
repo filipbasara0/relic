@@ -1,37 +1,39 @@
 import torch
 from torchvision.datasets import CIFAR10, STL10
 
-from relic.aug import get_relic_aug, ViewGenerator
+from relic.aug import ViewGenerator
 from relic.encoders import resnet18, resnet50, efficientnet_v2_s
 from relic.custom_datasets import tiny_imagenet, food101, imagenet1k
 
 
-def get_dataset(dataset_name, dataset_path):
+def get_dataset(args):
+    dataset_name, dataset_path = args.dataset_name, args.dataset_path
+    n_global, n_local = args.num_global_views, args.num_local_views
     if dataset_name == "cifar10":
         return CIFAR10(dataset_path,
                        train=True,
                        download=True,
-                       transform=ViewGenerator(get_relic_aug(32), 2))
+                       transform=ViewGenerator(32, n_global, n_local))
     elif dataset_name == "stl10":
         return STL10(dataset_path,
                      split='unlabeled',
                      download=True,
-                     transform=ViewGenerator(get_relic_aug(96), 2))
+                     transform=ViewGenerator(96, n_global, n_local))
     elif dataset_name == "tiny_imagenet":
-        return tiny_imagenet(transform=ViewGenerator(get_relic_aug(64), 2))
+        return tiny_imagenet(transform=ViewGenerator(64, n_global, n_local))
     elif dataset_name == "food101":
-        return food101(transform=ViewGenerator(get_relic_aug(192), 2))
+        return food101(transform=ViewGenerator(192, n_global, n_local))
     elif dataset_name == "imagenet1k":
-        return imagenet1k(transform=ViewGenerator(get_relic_aug(192), 2))
+        return imagenet1k(transform=ViewGenerator(192, n_global, n_local))
 
     raise Exception("Invalid dataset name - options are [cifar10, stl10]")
 
 
-def get_encoder(model_name):
+def get_encoder(model_name, modify_model=False):
     if model_name == "resnet18":
-        return resnet18()
+        return resnet18(modify_model)
     elif model_name == "resnet50":
-        return resnet50()
+        return resnet50(modify_model)
     elif model_name == "efficientnet":
         return efficientnet_v2_s()
     raise Exception(

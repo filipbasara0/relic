@@ -8,32 +8,32 @@ from relic.utils import get_feature_size
 
 class MLPHead(torch.nn.Module):
 
-    def __init__(self, in_dim, out_dim, hidden_dim=2048):
+    def __init__(self, in_dim, out_dim, hidden_dim=512):
         super(MLPHead, self).__init__()
         self.block = torch.nn.Sequential(
             torch.nn.Linear(in_dim, hidden_dim, bias=False),
             torch.nn.ReLU(),
             torch.nn.Linear(hidden_dim, out_dim, bias=False)
         )
+
     def forward(self, x):
         return self.block(x)
 
 
-def relic_loss(x, x_prime, t_prime, b, alpha, use_siglip=False,
+def relic_loss(x, x_prime, temp, alpha, use_siglip=False,
                pos_weight=10.0, neg_weight=0.1):
     """
     Calculate the sigmoid loss for CLIP.
 
     Parameters:
-    img_emb (torch.Tensor): Image embeddings tensor of shape [n, dim].
-    txt_emb (torch.Tensor): Text embeddings tensor of shape [n, dim].
-    t_prime (torch.Tensor): Learnable temperature parameter.
-    b (torch.Tensor): Learnable bias parameter.
-    tau (float): Fixed temperature param.
+    x (torch.Tensor): Online projections [n, dim].
+    x_prime (torch.Tensor): Target projections of shape [n, dim].
+    temp (torch.Tensor): Learnable temperature parameter.
     alpha (float): KL divergence (regularization term) weight.
     """
     n = x.size(0)
-    logits = torch.mm(x, x_prime.t()) * t_prime.exp() + b
+    x, x_prime = F.normalize(x, p=2, dim=-1), F.normalize(x_prime, p=2, dim=-1)
+    logits = torch.mm(x, x_prime.t()) * temp.exp()
 
     if use_siglip:
         # pairwise sigmoid loss (from https://arxiv.org/abs/2303.15343)
@@ -52,8 +52,8 @@ def relic_loss(x, x_prime, t_prime, b, alpha, use_siglip=False,
 
     loss = loss + alpha * invariance_loss
 
-    # return logits, labels for and invariance_loss for debug
-    return loss, logits, labels, invariance_loss
+    # return invariance_loss for debug
+    return loss, invariance_loss
 
 
 class ReLIC(torch.nn.Module):
@@ -74,7 +74,6 @@ class ReLIC(torch.nn.Module):
         self.target_encoder.requires_grad_(False)
 
         self.t_prime = nn.Parameter(torch.zeros(1))
-        self.b = nn.Parameter(torch.zeros(1))
 
     @torch.inference_mode()
     def get_features(self, img):
@@ -87,6 +86,16 @@ class ReLIC(torch.nn.Module):
             t1, t2 = self.target_encoder(x1), self.target_encoder(x2)
         t1, t2 = t1.detach(), t2.detach()
         return o1, o2, t1, t2
+    
+    @torch.inference_mode()
+    def get_target_pred(self, x):
+        with torch.no_grad():
+            t = self.target_encoder(x)
+        t = t.detach()
+        return t
+    
+    def get_online_pred(self, x):
+        return self.online_encoder(x)
 
     def update_params(self, gamma):
         with torch.no_grad():

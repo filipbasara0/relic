@@ -1,6 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 from torch.cuda.amp import GradScaler, autocast
+import torch.nn.functional as F
 import multiprocessing
 import random
 import numpy as np
@@ -33,7 +34,8 @@ def update_gamma(k, K, tau_base):
 def train_relic(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    encoder = get_encoder(args.encoder_model_name)
+    modify_model = True if "cifar" in args.dataset_name else False
+    encoder = get_encoder(args.encoder_model_name, modify_model)
     relic_model = ReLIC(encoder,
                         mlp_out_dim=args.proj_out_dim,
                         mlp_hidden=args.proj_hidden_dim)
@@ -45,11 +47,14 @@ def train_relic(args):
 
     summary(relic_model, input_size=[(1, 3, 32, 32), (1, 3, 32, 32)])
 
-    optimizer = torch.optim.Adam(list(relic_model.online_encoder.parameters()),
+    params = list(relic_model.online_encoder.parameters())
+    if not args.use_siglip:
+        params += [relic_model.t_prime]
+    optimizer = torch.optim.Adam(params,
                                  lr=args.learning_rate,
                                  weight_decay=args.weight_decay)
 
-    ds = get_dataset(args.dataset_name, args.dataset_path)
+    ds = get_dataset(args)
     train_loader = DataLoader(ds,
                               batch_size=args.batch_size,
                               num_workers=multiprocessing.cpu_count() - 8,
@@ -65,25 +70,41 @@ def train_relic(args):
     gamma = args.gamma
     global_step = 0
     total_loss = 0.0
+    n_global, n_local = args.num_global_views, args.num_local_views
     for epoch in range(args.num_epochs):
         epoch_loss = 0.0
         epoch_kl_loss = 0.0
         progress_bar = tqdm(train_loader,
                             desc=f"Epoch {epoch+1}/{args.num_epochs}")
-        for step, (images, _) in enumerate(progress_bar):
-            x1, x2 = images
-            x1 = x1.to(device)
-            x2 = x2.to(device)
+        for step, (views, _) in enumerate(progress_bar):
+            views = [v.to(device) for v in views]
+            global_views = views[:n_global]
+            local_views = views[:n_local]
 
             with autocast(enabled=args.fp16_precision):
-                o1, o2, t1, t2 = relic_model(x1, x2)
-                loss1, logits_1, labels, invariance_loss1 = relic_loss(
-                    o1, t2, relic_model.t_prime, relic_model.b,
-                    args.alpha, use_siglip=args.use_siglip)
-                loss2, logits_2, labels, invariance_loss2 = relic_loss(
-                    o2, t1, relic_model.t_prime, relic_model.b,
-                    args.alpha, use_siglip=args.use_siglip)
-                loss = (loss1 + loss2) / 2
+                projections_online = []
+                projections_target = []
+                for view in global_views:
+                    projections_online.append(relic_model.get_online_pred(view))
+                    projections_target.append(relic_model.get_target_pred(view))
+                for view in local_views:
+                    projections_online.append(relic_model.get_online_pred(view))
+                loss = 0
+                # invariance_loss used only for debug
+                invariance_loss = 0
+                scale = 0
+                for i_t, target_pred in enumerate(projections_target):
+                    for i_o, online_pred in enumerate(projections_online):
+                        if i_t != i_o:
+                            relic_loss_, invar_loss = relic_loss(online_pred, target_pred,
+                                                                relic_model.t_prime, args.alpha,
+                                                                use_siglip=args.use_siglip)
+                            loss += relic_loss_
+                            invariance_loss += invar_loss
+                            scale += 1
+
+                loss /= scale
+                invariance_loss /= scale
 
             optimizer.zero_grad()
             scaler.scale(loss).backward()
@@ -102,8 +123,7 @@ def train_relic(args):
             avg_loss = total_loss / (global_step + 1)
             ep_loss = epoch_loss / (step + 1)
 
-            epoch_kl_loss += (invariance_loss1.item() +
-                              invariance_loss2.item()) / 2
+            epoch_kl_loss += invariance_loss.item()
             ep_kl_loss = epoch_kl_loss / (step + 1)
 
             current_lr = optimizer.param_groups[0]['lr']
@@ -115,17 +135,20 @@ def train_relic(args):
                 f"KL Loss: {ep_kl_loss:.6f} |"
                 f"Gamma: {gamma:.6f} |"
                 f"Alpha: {args.alpha:.3f} |"
+                f"Temp: {relic_model.t_prime.exp().item():.3f} |"
                 f"Lr: {current_lr:.6f}")
 
             global_step += 1
             if global_step % args.log_every_n_steps == 0:
-                labels = torch.arange(logits_1.size(0)).to(logits_1.device)
-                top1, top5 = accuracy(logits_1, labels, topk=(1, 5))
+                with torch.no_grad():
+                    x, x_prime = projections_online[0], projections_target[1]
+                    x, x_prime = F.normalize(x, p=2, dim=-1), F.normalize(x_prime, p=2, dim=-1)
+                    logits = torch.mm(x, x_prime.t()) * relic_model.t_prime.exp()
+                labels = torch.arange(logits.size(0)).to(logits.device)
+                top1, top5 = accuracy(logits, labels, topk=(1, 5))
+                print("#" * 100)
                 print('acc/top1 logits1', top1[0].item())
                 print('acc/top5 logits1', top5[0].item())
-                top1, top5 = accuracy(logits_2, labels, topk=(1, 5))
-                print('acc/top1 logits2', top1[0].item())
-                print('acc/top5 logits2', top5[0].item())
                 print("#" * 100)
 
                 torch.save(relic_model.state_dict(),
@@ -134,3 +157,4 @@ def train_relic(args):
 
             if global_step % (args.log_every_n_steps * 5) == 0:
                 stl10_eval.evaluate(relic_model)
+                print("!" * 100)

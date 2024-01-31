@@ -53,7 +53,7 @@ parser.add_argument('--gamma',
                     type=float,
                     help='Initial EMA coefficient')
 parser.add_argument('--alpha',
-                    default=1.5,
+                    default=1.0,
                     type=float,
                     help='Regularization loss factor')
 parser.add_argument('--update_gamma_after_step',
@@ -71,6 +71,14 @@ parser.add_argument('--ckpt_path',
 parser.add_argument('--use_siglip',
                     action='store_true',
                     help='Whether to use siglip loss')
+parser.add_argument('--num_global_views',
+                    default=2,
+                    type=int,
+                    help='Number of global (large) views to generate through augmentation')
+parser.add_argument('--num_local_views',
+                    default=4,
+                    type=int,
+                    help='Number of local (small) views to generate through augmentation')
 
 
 def main():
