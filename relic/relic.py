@@ -21,10 +21,8 @@ class MLPHead(torch.nn.Module):
 
 
 def relic_loss(x, x_prime, temp, alpha, use_siglip=False,
-               pos_weight=10.0, neg_weight=0.1):
+               pos_weight=10.0, neg_weight=0.1, max_tau=5.0):
     """
-    Calculate the sigmoid loss for CLIP.
-
     Parameters:
     x (torch.Tensor): Online projections [n, dim].
     x_prime (torch.Tensor): Target projections of shape [n, dim].
@@ -33,7 +31,7 @@ def relic_loss(x, x_prime, temp, alpha, use_siglip=False,
     """
     n = x.size(0)
     x, x_prime = F.normalize(x, p=2, dim=-1), F.normalize(x_prime, p=2, dim=-1)
-    logits = torch.mm(x, x_prime.t()) * temp.exp()
+    logits = torch.mm(x, x_prime.t()) * temp.exp().clamp(0, max_tau)
 
     if use_siglip:
         # pairwise sigmoid loss (from https://arxiv.org/abs/2303.15343)

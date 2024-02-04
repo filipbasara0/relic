@@ -49,7 +49,7 @@ parser.add_argument('--log_every_n_steps',
                     type=int,
                     help='Log every n steps')
 parser.add_argument('--gamma',
-                    default=0.996,
+                    default=0.995,
                     type=float,
                     help='Initial EMA coefficient')
 parser.add_argument('--alpha',

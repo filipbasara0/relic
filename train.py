@@ -14,6 +14,7 @@ from relic.utils import accuracy, get_dataset, get_encoder
 from relic.stl10_eval import STL10Eval
 
 SEED = 42
+MAX_TAU = 5.0
 
 random.seed(SEED)
 np.random.seed(SEED)
@@ -97,8 +98,9 @@ def train_relic(args):
                     for i_o, online_pred in enumerate(projections_online):
                         if i_t != i_o:
                             relic_loss_, invar_loss = relic_loss(online_pred, target_pred,
-                                                                relic_model.t_prime, args.alpha,
-                                                                use_siglip=args.use_siglip)
+                                                                 relic_model.t_prime, args.alpha,
+                                                                 use_siglip=args.use_siglip,
+                                                                 max_tau=MAX_TAU)
                             loss += relic_loss_
                             invariance_loss += invar_loss
                             scale += 1
@@ -143,7 +145,7 @@ def train_relic(args):
                 with torch.no_grad():
                     x, x_prime = projections_online[0], projections_target[1]
                     x, x_prime = F.normalize(x, p=2, dim=-1), F.normalize(x_prime, p=2, dim=-1)
-                    logits = torch.mm(x, x_prime.t()) * relic_model.t_prime.exp()
+                    logits = torch.mm(x, x_prime.t()) * relic_model.t_prime.exp().clamp(0, MAX_TAU)
                 labels = torch.arange(logits.size(0)).to(logits.device)
                 top1, top5 = accuracy(logits, labels, topk=(1, 5))
                 print("#" * 100)
