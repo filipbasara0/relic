@@ -25,9 +25,9 @@ More detailed evaluation steps and results for [CIFAR10](https://github.com/fili
 
 | Evaulation model    | Dataset | Feature Extractor| Encoder   | Feature dim | Projection Head dim | Epochs | Top1 % |
 |---------------------|---------|------------------|-----------|-------------|---------------------|--------|--------|
-| LogisticRegression  | CIFAR10 | ReLIC            | ResNet-18 | 512         | 64                  | 100    | 71.07  |
-| LogisticRegression  | STL10   | ReLIC            | ResNet-18 | 512         | 64                  | 100    | 76.10  |
-| LogisticRegression  | STL10   | ReLIC            | ResNet-50 | 2048        | 64                  | 100    | 80.40  |
+| LogisticRegression  | CIFAR10 | ReLIC            | ResNet-18 | 512         | 64                  | 100    | 82.53  |
+| LogisticRegression  | STL10   | ReLIC            | ResNet-18 | 512         | 64                  | 100    | 77.12  |
+| LogisticRegression  | STL10   | ReLIC            | ResNet-50 | 2048        | 64                  | 100    | 81.95  |
 
 [Here](https://drive.google.com/file/d/1XaZBdvPGPh2nQzzHAJ_oL41c1f8Lc_FN/view?usp=sharing) is a link to a resnet18 encoder trained on the ImageNet-1k subset. This models pefroms better on both CIFAR10 and STL10.
 
