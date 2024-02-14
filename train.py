@@ -14,7 +14,6 @@ from relic.utils import accuracy, get_dataset, get_encoder
 from relic.stl10_eval import STL10Eval
 
 SEED = 42
-MAX_TAU = 5.0
 
 random.seed(SEED)
 np.random.seed(SEED)
@@ -37,9 +36,14 @@ def train_relic(args):
 
     modify_model = True if "cifar" in args.dataset_name else False
     encoder = get_encoder(args.encoder_model_name, modify_model)
+    if not args.use_siglip:
+        init_tau, init_b, max_tau = np.log(1), 0, 5
+    else:
+        init_tau, init_b, max_tau = np.log(10), -10, 15
     relic_model = ReLIC(encoder,
                         mlp_out_dim=args.proj_out_dim,
-                        mlp_hidden=args.proj_hidden_dim)
+                        mlp_hidden=args.proj_hidden_dim,
+                        init_tau=init_tau, init_b=init_b)
 
     if args.ckpt_path:
         model_state = torch.load(args.ckpt_path)
@@ -48,9 +52,7 @@ def train_relic(args):
 
     summary(relic_model, input_size=[(1, 3, 32, 32), (1, 3, 32, 32)])
 
-    params = list(relic_model.online_encoder.parameters())
-    if not args.use_siglip:
-        params += [relic_model.t_prime]
+    params = list(relic_model.online_encoder.parameters()) + [relic_model.tau, relic_model.b]
     optimizer = torch.optim.Adam(params,
                                  lr=args.learning_rate,
                                  weight_decay=args.weight_decay)
@@ -98,9 +100,9 @@ def train_relic(args):
                     for i_o, online_pred in enumerate(projections_online):
                         if i_t != i_o:
                             relic_loss_, invar_loss = relic_loss(online_pred, target_pred,
-                                                                 relic_model.t_prime, args.alpha,
-                                                                 use_siglip=args.use_siglip,
-                                                                 max_tau=MAX_TAU)
+                                                                 relic_model.tau, relic_model.b, 
+                                                                 args.alpha, max_tau=max_tau,
+                                                                 use_siglip=args.use_siglip)
                             loss += relic_loss_
                             invariance_loss += invar_loss
                             scale += 1
@@ -137,7 +139,8 @@ def train_relic(args):
                 f"KL Loss: {ep_kl_loss:.6f} |"
                 f"Gamma: {gamma:.6f} |"
                 f"Alpha: {args.alpha:.3f} |"
-                f"Temp: {relic_model.t_prime.exp().item():.3f} |"
+                f"Temp: {relic_model.tau.exp().item():.3f} |"
+                f"Bias: {relic_model.b.item():.3f} |"
                 f"Lr: {current_lr:.6f}")
 
             global_step += 1
@@ -145,7 +148,7 @@ def train_relic(args):
                 with torch.no_grad():
                     x, x_prime = projections_online[0], projections_target[1]
                     x, x_prime = F.normalize(x, p=2, dim=-1), F.normalize(x_prime, p=2, dim=-1)
-                    logits = torch.mm(x, x_prime.t()) * relic_model.t_prime.exp().clamp(0, MAX_TAU)
+                    logits = torch.mm(x, x_prime.t()) * relic_model.tau.exp().clamp(0, max_tau) + relic_model.b
                 labels = torch.arange(logits.size(0)).to(logits.device)
                 top1, top5 = accuracy(logits, labels, topk=(1, 5))
                 print("#" * 100)

@@ -2,6 +2,7 @@ import torch
 import copy
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 from relic.utils import get_feature_size
 
@@ -20,24 +21,22 @@ class MLPHead(torch.nn.Module):
         return self.block(x)
 
 
-def relic_loss(x, x_prime, temp, alpha, use_siglip=False,
-               pos_weight=10.0, neg_weight=0.1, max_tau=5.0):
+def relic_loss(x, x_prime, tau, b, alpha, use_siglip=False, max_tau=5.0):
     """
     Parameters:
     x (torch.Tensor): Online projections [n, dim].
     x_prime (torch.Tensor): Target projections of shape [n, dim].
-    temp (torch.Tensor): Learnable temperature parameter.
+    tau (torch.Tensor): Learnable temperature parameter.
+    b (torch.Tensor): Learnable bias parameter.
     alpha (float): KL divergence (regularization term) weight.
     """
     n = x.size(0)
     x, x_prime = F.normalize(x, p=2, dim=-1), F.normalize(x_prime, p=2, dim=-1)
-    logits = torch.mm(x, x_prime.t()) * temp.exp().clamp(0, max_tau)
-
+    logits = torch.mm(x, x_prime.t()) * tau.exp().clamp(0, max_tau) + b
     if use_siglip:
         # pairwise sigmoid loss (from https://arxiv.org/abs/2303.15343)
         labels = 2 * torch.eye(n, device=x.device) - 1
-        weights = torch.where(labels > 0, pos_weight, neg_weight)
-        loss = -torch.sum(weights * F.logsigmoid(labels * logits)) / n
+        loss = -torch.sum(F.logsigmoid(labels * logits)) / n
     else:
         # Instance discrimination loss
         labels = torch.arange(n).to(logits.device)
@@ -60,7 +59,9 @@ class ReLIC(torch.nn.Module):
                  encoder,
                  mlp_out_dim=64,
                  mlp_hidden=512,
-                 mlp_in_dim=None):
+                 mlp_in_dim=None,
+                 init_tau=np.log(1.0),
+                 init_b=0):
         super(ReLIC, self).__init__()
 
         if not mlp_in_dim:
@@ -71,7 +72,8 @@ class ReLIC(torch.nn.Module):
         self.target_encoder = copy.deepcopy(self.online_encoder)
         self.target_encoder.requires_grad_(False)
 
-        self.t_prime = nn.Parameter(torch.zeros(1))
+        self.tau = nn.Parameter(torch.ones([]) * init_tau)
+        self.b = nn.Parameter(torch.ones([]) * init_b)
 
     @torch.inference_mode()
     def get_features(self, img):
