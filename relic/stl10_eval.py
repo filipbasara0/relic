@@ -55,14 +55,12 @@ class STL10Eval:
 
     @torch.inference_mode
     def evaluate(self, relic_model):
-        relic_model.eval()
         model = relic_model.target_encoder[0]
-        with torch.no_grad():            
-            embeddings, labels = self._get_image_embs_labels(model, self.train_loader)
-            embeddings_val, labels_val = self._get_image_embs_labels(model, self.val_loader)
-            
-            logistic_regression(embeddings, labels, embeddings_val, labels_val)
+        embeddings, labels = self._get_image_embs_labels(model, self.train_loader)
+        embeddings_val, labels_val = self._get_image_embs_labels(model, self.val_loader)
+        logistic_regression(embeddings, labels, embeddings_val, labels_val)
 
+    @torch.inference_mode
     def _get_image_embs_labels(self, model, dataloader):
         embs, labels = [], []
         for _, (images, targets) in enumerate(dataloader):
